@@ -1,0 +1,5 @@
+== Description ==
+
+nivBuffs is a lightweight replacement for blizzards default buff frames. It shows your buffs, debuffs and temporary weapon enchants.
+
+For a detailed description and a feature overview visit [[http://www.wowinterface.com/downloads/info18440-nivBuffs.html]].

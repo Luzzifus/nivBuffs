@@ -1,0 +1,9 @@
+## Interface: 40000
+## Title: nivBuffs
+## Author: Luzzifus
+## OptionalDeps: ButtonFacade
+## SavedVariables: nivBuffs_BF
+
+nivAuraButtonTemplate.xml
+config.lua
+nivBuffs.lua
