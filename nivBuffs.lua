@@ -25,7 +25,7 @@ local function createAuraButton(btn, filter)
     btn.icon = CreateFrame("Frame", nil, btn)
     btn.icon:SetAllPoints(btn)
     btn.icon:SetFrameLevel(1)
-    
+
     local s, b = 3, 3 / 28
 
     -- border texture
@@ -90,9 +90,12 @@ local function createAuraButton(btn, filter)
     btn.stacks:SetFontObject(GameFontNormalSmall)
     btn.stacks:SetTextColor(nivBuffDB.fontColor.r, nivBuffDB.fontColor.g, nivBuffDB.fontColor.b, 1)
     btn.stacks:SetFont(nivBuffDB.stackFont, nivBuffDB.stackFontSize, nivBuffDB.stackFontStyle)
-    
-    if BF then bfButtons:AddButton(btn, { Icon = btn.icon.tex, Cooldown = btn.cd } ) end
-    
+
+    if BF then
+        bfButtons:AddButton(btn, { Icon = btn.icon.tex, Cooldown = btn.cd } )
+        ChatFrame1:AddMessage("Button added")
+    end
+
     btn.lastUpdate = 0
     btn.filter = filter
     btn.created = true
@@ -172,7 +175,7 @@ local function updateAuraButtonStyle(btn, filter)
         c.r, c.g, c.b = cond and 0.6 or grey, cond and 0 or grey, cond and 0 or grey
         if dType and cond then c = DebuffTypeColor[dType] end
         btn.icon:SetBackdropBorderColor(c.r, c.g, c.b, 1)
-        
+
         if duration > 0 then 
             if btn.cd then 
                 btn.cd:SetCooldown(eTime - duration, duration)
@@ -225,7 +228,7 @@ local function updateWeaponEnchantButtonStyle(btn, slot, hasEnchant, rTime)
         local c = GetInventoryItemQuality("player", slotid)
         if nivBuffDB.coloredBorder then r, g, b = GetItemQualityColor(c or 1) end
         btn.icon:SetBackdropBorderColor(r, g, b, 1)
-        
+
         btn.rTime = rTime / 1000
         btn.bTime = nivBuffDB.blinkTime + 1.1
         btn.freq = 1
@@ -238,7 +241,7 @@ local function updateWeaponEnchantButtonStyle(btn, slot, hasEnchant, rTime)
         if btn.bar then
             btn.bar:SetMinMaxValues(0, 1800)
             btn.bar:SetAlpha(1)
-        end        
+        end
         btn.icon:SetAlpha(1)
 
         btn:SetScript("OnUpdate", UpdateWeaponEnchantButtonCD)
@@ -268,13 +271,51 @@ local function updateStyle(header, event, unit)
     end
 end
 
+local function setHeaderAttributes(header, template, isBuff)
+    header:SetAttribute("unit", "player")
+    header:SetAttribute("filter", isBuff and "HELPFUL" or "HARMFUL")
+    header:SetAttribute("template", template)
+    header:SetAttribute("separateOwn", 0)
+    header:SetAttribute("minWidth", 100)
+    header:SetAttribute("minHeight", 100)
+
+    header:SetAttribute("point", isBuff and nivBuffDB.buffAnchor[1] or nivBuffDB.debuffAnchor[1])
+    header:SetAttribute("xOffset", isBuff and nivBuffDB.buffXoffset or nivBuffDB.debuffXoffset)
+    header:SetAttribute("yOffset", isBuff and nivBuffDB.buffYoffset or nivBuffDB.debuffYoffset)
+    header:SetAttribute("wrapAfter", isBuff and nivBuffDB.buffIconsPerRow or nivBuffDB.debuffIconsPerRow)
+    header:SetAttribute("wrapXOffset", isBuff and nivBuffDB.buffWrapXoffset or nivBuffDB.debuffWrapXoffset)
+    header:SetAttribute("wrapYOffset", isBuff and nivBuffDB.buffWrapYoffset or nivBuffDB.debuffWrapYoffset)
+    header:SetAttribute("maxWraps", isBuff and nivBuffDB.buffMaxWraps or nivBuffDB.debuffMaxWraps)
+
+    header:SetAttribute("sortMethod", nivBuffDB.sortMethod)
+    header:SetAttribute("sortDirection", nivBuffDB.sortReverse and "-" or "+")
+
+    if isBuff and nivBuffDB.showWeaponEnch then
+        header:SetAttribute("includeWeapons", 1)
+        header:SetAttribute("weaponTemplate", "nivBuffButtonTemplate")
+    end
+
+    header:SetScale(isBuff and nivBuffDB.buffScale or nivBuffDB.debuffScale)
+    header.filter = isBuff and "HELPFUL" or "HARMFUL"
+    
+    header:RegisterEvent("PLAYER_ENTERING_WORLD")
+    header:HookScript("OnEvent", updateStyle)
+end
+
 function nivBuffs:ADDON_LOADED(event, addon)
     if (addon ~= 'nivBuffs') then return end
     self:UnregisterEvent(event)
 
+    nivBuffDB.blinkStep = nivBuffDB.blinkSpeed / 10
+
+    BuffFrame:UnregisterEvent("UNIT_AURA")
+    BuffFrame:Hide()
+    TemporaryEnchantFrame:Hide()
+    ConsolidatedBuffs:Hide()
+
     --ChatFrame1:AddMessage(LBF and "OK" or "LBF fehlt!")
     --ChatFrame1:AddMessage(nivBuffDB.useButtonFacade and "OK" or "LBF deaktiviert!")
-    
+
     -- buttonfacade
     if not nivBuffs_BF then nivBuffs_BF = {} end
     if BF then
@@ -289,55 +330,8 @@ function nivBuffs:ADDON_LOADED(event, addon)
 
         --ChatFrame1:AddMessage(nivBuffs_BF.skinID or "?")
     end
-end
 
-function nivBuffs:BFSkinCallBack(skinID, gloss, backdrop, group, button, colors)
-    nivBuffs_BF.skinID = skinID
-    nivBuffs_BF.gloss = gloss
-    nivBuffs_BF.backdrop = backdrop
-    nivBuffs_BF.colors = colors
-    --ChatFrame1:AddMessage("Callback: " .. (nivBuffs_BF.skinID or "?"))
-end
-
-do
-    BuffFrame:UnregisterEvent("UNIT_AURA")
-    BuffFrame:Hide()
-    TemporaryEnchantFrame:Hide()
-    ConsolidatedBuffs:Hide()
-
-    nivBuffDB.blinkStep = nivBuffDB.blinkSpeed / 10
-
-    local function setHeaderAttributes(header, template, isBuff)
-        header:SetAttribute("unit", "player")
-        header:SetAttribute("filter", isBuff and "HELPFUL" or "HARMFUL")
-        header:SetAttribute("template", template)
-        header:SetAttribute("separateOwn", 0)
-        header:SetAttribute("minWidth", 100)
-        header:SetAttribute("minHeight", 100)
-
-        header:SetAttribute("point", isBuff and nivBuffDB.buffAnchor[1] or nivBuffDB.debuffAnchor[1])
-        header:SetAttribute("xOffset", isBuff and nivBuffDB.buffXoffset or nivBuffDB.debuffXoffset)
-        header:SetAttribute("yOffset", isBuff and nivBuffDB.buffYoffset or nivBuffDB.debuffYoffset)
-        header:SetAttribute("wrapAfter", isBuff and nivBuffDB.buffIconsPerRow or nivBuffDB.debuffIconsPerRow)
-        header:SetAttribute("wrapXOffset", isBuff and nivBuffDB.buffWrapXoffset or nivBuffDB.debuffWrapXoffset)
-        header:SetAttribute("wrapYOffset", isBuff and nivBuffDB.buffWrapYoffset or nivBuffDB.debuffWrapYoffset)
-        header:SetAttribute("maxWraps", isBuff and nivBuffDB.buffMaxWraps or nivBuffDB.debuffMaxWraps)
-
-        header:SetAttribute("sortMethod", nivBuffDB.sortMethod)
-        header:SetAttribute("sortDirection", nivBuffDB.sortReverse and "-" or "+")
-
-        if isBuff and nivBuffDB.showWeaponEnch then
-            header:SetAttribute("includeWeapons", 1)
-            header:SetAttribute("weaponTemplate", "nivBuffButtonTemplate")
-        end
-
-        header:SetScale(isBuff and nivBuffDB.buffScale or nivBuffDB.debuffScale)
-        header.filter = isBuff and "HELPFUL" or "HARMFUL"
-        
-        header:RegisterEvent("PLAYER_ENTERING_WORLD")
-        header:HookScript("OnEvent", updateStyle)
-    end
-
+    -- init headers
     setHeaderAttributes(buffHeader, "nivBuffButtonTemplate", true)
     buffHeader:SetPoint(unpack(nivBuffDB.buffAnchor))
     buffHeader:Show()
@@ -345,4 +339,12 @@ do
     setHeaderAttributes(debuffHeader, "nivDebuffButtonTemplate", false)
     debuffHeader:SetPoint(unpack(nivBuffDB.debuffAnchor))
     debuffHeader:Show()
+end
+
+function nivBuffs:BFSkinCallBack(skinID, gloss, backdrop, group, button, colors)
+    nivBuffs_BF.skinID = skinID
+    nivBuffs_BF.gloss = gloss
+    nivBuffs_BF.backdrop = backdrop
+    nivBuffs_BF.colors = colors
+    ChatFrame1:AddMessage("Callback: " .. (nivBuffs_BF.skinID or "?"))
 end
