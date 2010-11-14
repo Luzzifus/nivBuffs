@@ -14,8 +14,8 @@ local debuffHeader = CreateFrame("Frame", "nivBuffs_Debuffs", UIParent, "SecureA
 
 local function btn_iterator(self, i)
     i = i + 1
-	local child = self:GetAttribute("child" .. i)
-	if child and child:IsShown() then return i, child, child:GetAttribute("index") end
+    local child = self:GetAttribute("child" .. i)
+    if child and child:IsShown() then return i, child, child:GetAttribute("index") end
 end
 function buffHeader:ActiveButtons() return btn_iterator, self, 0 end
 function debuffHeader:ActiveButtons() return btn_iterator, self, 0 end
@@ -30,10 +30,10 @@ local function createAuraButton(btn, filter)
 
     -- border texture
     local backdrop = {
-		edgeFile = "Interface\\Addons\\nivBuffs\\borderTex", 
-		edgeSize = 16,
-		insets = { left = s, right = s, top = s, bottom = s }
-	}
+        edgeFile = "Interface\\Addons\\nivBuffs\\borderTex", 
+        edgeSize = 16,
+        insets = { left = s, right = s, top = s, bottom = s }
+    }
 
     -- icon texture
     btn.icon.tex = btn.icon:CreateTexture(nil, "ARTWORK")
@@ -68,10 +68,10 @@ local function createAuraButton(btn, filter)
         btn.bar.bg:SetVertexColor(0, 0, 0, 0.6)
     end
 
-	-- subframe for value texts
-	btn.vFrame = CreateFrame("Frame", nil, btn)
-	btn.vFrame:SetAllPoints(btn)
-	btn.vFrame:SetFrameLevel(5)
+    -- subframe for value texts
+    btn.vFrame = CreateFrame("Frame", nil, btn)
+    btn.vFrame:SetAllPoints(btn)
+    btn.vFrame:SetFrameLevel(5)
 
     -- duration text
     btn.text = btn.vFrame:CreateFontString(nil, "OVERLAY")
@@ -94,7 +94,7 @@ local function createAuraButton(btn, filter)
     if BF then bfButtons:AddButton(btn, { Icon = btn.icon.tex, Cooldown = btn.cd } ) end
     
     btn.lastUpdate = 0
-	btn.filter = filter
+    btn.filter = filter
     btn.created = true
     btn.cAlpha = 1
 end
@@ -112,9 +112,9 @@ local function formatTimeRemaining(msecs)
 end
 
 local function updateBlink(btn)
-	if btn.cAlpha >= 1 then btn.increasing = false elseif btn.cAlpha <= 0 then btn.increasing = true end
-	btn.cAlpha = btn.cAlpha + (btn.increasing and nivBuffDB.blinkStep or -nivBuffDB.blinkStep)
-	btn.icon:SetAlpha(btn.cAlpha)
+    if btn.cAlpha >= 1 then btn.increasing = false elseif btn.cAlpha <= 0 then btn.increasing = true end
+    btn.cAlpha = btn.cAlpha + (btn.increasing and nivBuffDB.blinkStep or -nivBuffDB.blinkStep)
+    btn.icon:SetAlpha(btn.cAlpha)
 end
 
 local function updateBar(btn, duration)
@@ -128,34 +128,34 @@ local function updateBar(btn, duration)
 end
 
 local function UpdateAuraButtonCD(btn, elapsed)
-	if btn.lastUpdate < btn.freq then btn.lastUpdate = btn.lastUpdate + elapsed; return end
-	btn.lastUpdate = 0
-	
-	local name,_,_,_,_,duration,eTime = UnitAura("player", btn:GetID(), btn.filter)
-	if name and duration > 0 then 
-		local msecs = eTime - GetTime()
-		btn.text:SetText(formatTimeRemaining(msecs))
+    if btn.lastUpdate < btn.freq then btn.lastUpdate = btn.lastUpdate + elapsed; return end
+    btn.lastUpdate = 0
+
+    local name,_,_,_,_,duration,eTime = UnitAura("player", btn:GetID(), btn.filter)
+    if name and duration > 0 then 
+        local msecs = eTime - GetTime()
+        btn.text:SetText(formatTimeRemaining(msecs))
 
         btn.rTime = msecs
-		if btn.rTime < btn.bTime then btn.freq = .05 end
-		if btn.rTime <= nivBuffDB.blinkTime then updateBlink(btn) end
+        if btn.rTime < btn.bTime then btn.freq = .05 end
+        if btn.rTime <= nivBuffDB.blinkTime then updateBlink(btn) end
 
         updateBar(btn, duration)
     end
 end
 
 local function UpdateWeaponEnchantButtonCD(btn, elapsed)
-	if btn.lastUpdate < btn.freq then btn.lastUpdate = btn.lastUpdate + elapsed; return end
-	btn.lastUpdate = 0
+    if btn.lastUpdate < btn.freq then btn.lastUpdate = btn.lastUpdate + elapsed; return end
+    btn.lastUpdate = 0
 
-	local _,r1,_,_,r2 = GetWeaponEnchantInfo()
-	local rTime = (btn.slotID == 16) and r1 or r2
+    local _,r1,_,_,r2 = GetWeaponEnchantInfo()
+    local rTime = (btn.slotID == 16) and r1 or r2
 
     btn.rTime = rTime / 1000
-	btn.text:SetText(formatTimeRemaining(btn.rTime))
+    btn.text:SetText(formatTimeRemaining(btn.rTime))
 
-	if btn.rTime < btn.bTime then btn.freq = .05 end
-	if btn.rTime <= nivBuffDB.blinkTime then updateBlink(btn) end
+    if btn.rTime < btn.bTime then btn.freq = .05 end
+    if btn.rTime <= nivBuffDB.blinkTime then updateBlink(btn) end
     
     updateBar(btn, 1800)
 end
@@ -164,16 +164,16 @@ local function updateAuraButtonStyle(btn, filter)
     if not btn.created then createAuraButton(btn, filter) end
     
     local name,_,icon,count,dType,duration,eTime = UnitAura("player", btn:GetID(), filter)
-	if name then
+    if name then
         btn.icon.tex:SetTexture(icon)
 
         local cond = (filter == "HARMFUL") and nivBuffDB.coloredBorder
         local c = {}
-		c.r, c.g, c.b = cond and 0.6 or grey, cond and 0 or grey, cond and 0 or grey
-		if dType and cond then c = DebuffTypeColor[dType] end
-		btn.icon:SetBackdropBorderColor(c.r, c.g, c.b, 1)
+        c.r, c.g, c.b = cond and 0.6 or grey, cond and 0 or grey, cond and 0 or grey
+        if dType and cond then c = DebuffTypeColor[dType] end
+        btn.icon:SetBackdropBorderColor(c.r, c.g, c.b, 1)
         
-		if duration > 0 then 
+        if duration > 0 then 
             if btn.cd then 
                 btn.cd:SetCooldown(eTime - duration, duration)
                 btn.cd:SetAlpha(1)
@@ -186,31 +186,31 @@ local function updateAuraButtonStyle(btn, filter)
 
             btn.rTime = eTime - GetTime()
             btn.bTime = nivBuffDB.blinkTime + 1.1
-			btn.freq = 1
+            btn.freq = 1
 
             btn:SetScript("OnUpdate", UpdateAuraButtonCD)
-			UpdateAuraButtonCD(btn, 5)
-		else
-			btn.text:SetText("")
+            UpdateAuraButtonCD(btn, 5)
+        else
+            btn.text:SetText("")
             btn.icon:SetAlpha(1)
-			if btn.cd then 
+            if btn.cd then 
                 btn.cd:SetCooldown(0, -1)
                 btn.cd:SetAlpha(0)
             end
             if btn.bar then btn.bar:SetAlpha(0) end
-			btn:SetScript("OnUpdate", nil)
-		end
-		btn.stacks:SetText((count > 1) and count or "")
-	else
-		btn.text:SetText("")
-		btn.stacks:SetText("")
-		if btn.cd then 
+            btn:SetScript("OnUpdate", nil)
+        end
+        btn.stacks:SetText((count > 1) and count or "")
+    else
+        btn.text:SetText("")
+        btn.stacks:SetText("")
+        if btn.cd then 
             btn.cd:SetCooldown(0, -1)
             btn.cd:SetAlpha(0)
         end
         if btn.bar then btn.bar:SetAlpha(0) end
-		btn:SetScript("OnUpdate", nil)
-	end
+        btn:SetScript("OnUpdate", nil)
+    end
 end
 
 local function updateWeaponEnchantButtonStyle(btn, slot, hasEnchant, rTime)
@@ -228,7 +228,7 @@ local function updateWeaponEnchantButtonStyle(btn, slot, hasEnchant, rTime)
         
         btn.rTime = rTime / 1000
         btn.bTime = nivBuffDB.blinkTime + 1.1
-		btn.freq = 1
+        btn.freq = 1
 
         btn.duration = 1800
         if btn.cd then 
@@ -241,21 +241,21 @@ local function updateWeaponEnchantButtonStyle(btn, slot, hasEnchant, rTime)
         end        
         btn.icon:SetAlpha(1)
 
-		btn:SetScript("OnUpdate", UpdateWeaponEnchantButtonCD)
-		UpdateWeaponEnchantButtonCD(btn, 5)
-	else
-		btn.text:SetText("")
+        btn:SetScript("OnUpdate", UpdateWeaponEnchantButtonCD)
+        UpdateWeaponEnchantButtonCD(btn, 5)
+    else
+        btn.text:SetText("")
         if btn.cd then
             btn.cd:SetCooldown(0, -1)
             btn.cd:SetAlpha(0)
         end
         if btn.bar then btn.bar:SetAlpha(0) end
-		btn:SetScript("OnUpdate", nil)
-	end
+        btn:SetScript("OnUpdate", nil)
+    end
 end
 
 local function updateStyle(header, event, unit)
-	if unit ~= "player" and unit ~= "vehicle" and event ~= "PLAYER_ENTERING_WORLD" then return end
+    if unit ~= "player" and unit ~= "vehicle" and event ~= "PLAYER_ENTERING_WORLD" then return end
 
     for _,btn in header:ActiveButtons() do updateAuraButtonStyle(btn, header.filter) end
     if header.filter == "HELPFUL" then
@@ -269,9 +269,9 @@ local function updateStyle(header, event, unit)
 end
 
 function nivBuffs:ADDON_LOADED(event, addon)
-	if (addon ~= 'nivBuffs') then return end
-	self:UnregisterEvent(event)
-    
+    if (addon ~= 'nivBuffs') then return end
+    self:UnregisterEvent(event)
+
     --ChatFrame1:AddMessage(LBF and "OK" or "LBF fehlt!")
     --ChatFrame1:AddMessage(nivBuffDB.useButtonFacade and "OK" or "LBF deaktiviert!")
     
@@ -280,13 +280,13 @@ function nivBuffs:ADDON_LOADED(event, addon)
     if BF then
         --ChatFrame1:AddMessage(nivBuffs_BF.skinID or "?")
         LBF:RegisterSkinCallback("nivBuffs", self.BFSkinCallBack, self)
-        
+
         --ChatFrame1:AddMessage(nivBuffs_BF.skinID or "?")
         bfButtons = LBF:Group("nivBuffs", "auras")
-        
+
         --ChatFrame1:AddMessage(nivBuffs_BF.skinID or "?")
         bfButtons:Skin(nivBuffs_BF.skinID, nivBuffs_BF.gloss, nivBuffs_BF.backdrop, nivBuffs_BF.colors)
-        
+
         --ChatFrame1:AddMessage(nivBuffs_BF.skinID or "?")
     end
 end
@@ -305,7 +305,7 @@ do
     TemporaryEnchantFrame:Hide()
     ConsolidatedBuffs:Hide()
 
-	nivBuffDB.blinkStep = nivBuffDB.blinkSpeed / 10
+    nivBuffDB.blinkStep = nivBuffDB.blinkSpeed / 10
 
     local function setHeaderAttributes(header, template, isBuff)
         header:SetAttribute("unit", "player")
