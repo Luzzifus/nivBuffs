@@ -6,4 +6,5 @@
 
 nivAuraButtonTemplate.xml
 config.lua
+LibStub.lua
 nivBuffs.lua

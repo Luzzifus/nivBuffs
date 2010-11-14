@@ -2,7 +2,7 @@
 ..\FrameXML\UI.xsd">
 	<Button name="nivBuffButtonTemplate" inherits="SecureActionButtonTemplate" virtual="true">
 		<Size x="28" y="28"/>
-		<Attributes>
+        <Attributes>
 			<Attribute name="type" value="cancelaura"/>
 		</Attributes>
 		<Scripts>
