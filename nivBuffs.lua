@@ -91,10 +91,7 @@ local function createAuraButton(btn, filter)
     btn.stacks:SetTextColor(nivBuffDB.fontColor.r, nivBuffDB.fontColor.g, nivBuffDB.fontColor.b, 1)
     btn.stacks:SetFont(nivBuffDB.stackFont, nivBuffDB.stackFontSize, nivBuffDB.stackFontStyle)
 
-    if BF then
-        bfButtons:AddButton(btn, { Icon = btn.icon.tex, Cooldown = btn.cd } )
-        ChatFrame1:AddMessage("Button added")
-    end
+    if BF then bfButtons:AddButton(btn, { Icon = btn.icon.tex, Cooldown = btn.cd } ) end
 
     btn.lastUpdate = 0
     btn.filter = filter
@@ -313,22 +310,19 @@ function nivBuffs:ADDON_LOADED(event, addon)
     TemporaryEnchantFrame:Hide()
     ConsolidatedBuffs:Hide()
 
-    --ChatFrame1:AddMessage(LBF and "OK" or "LBF fehlt!")
-    --ChatFrame1:AddMessage(nivBuffDB.useButtonFacade and "OK" or "LBF deaktiviert!")
-
     -- buttonfacade
     if not nivBuffs_BF then nivBuffs_BF = {} end
+    if not nivBuffs_BF.auras then nivBuffs_BF.auras = {} end
+
     if BF then
-        --ChatFrame1:AddMessage(nivBuffs_BF.skinID or "?")
         LBF:RegisterSkinCallback("nivBuffs", self.BFSkinCallBack, self)
 
-        --ChatFrame1:AddMessage(nivBuffs_BF.skinID or "?")
+        ChatFrame1:AddMessage(nivBuffs_BF.skinID or "?")
+        LBF:Group("nivBuffs"):Skin(nivBuffs_BF.skinID, nivBuffs_BF.gloss, nivBuffs_BF.backdrop, nivBuffs_BF.colors)
+
         bfButtons = LBF:Group("nivBuffs", "auras")
-
-        --ChatFrame1:AddMessage(nivBuffs_BF.skinID or "?")
-        bfButtons:Skin(nivBuffs_BF.skinID, nivBuffs_BF.gloss, nivBuffs_BF.backdrop, nivBuffs_BF.colors)
-
-        --ChatFrame1:AddMessage(nivBuffs_BF.skinID or "?")
+        bfButtons:Skin(nivBuffs_BF.auras.skinID, nivBuffs_BF.auras.gloss, nivBuffs_BF.auras.backdrop, nivBuffs_BF.auras.colors)
+        ChatFrame1:AddMessage(nivBuffs_BF.skinID or "?")
     end
 
     -- init headers
@@ -342,9 +336,19 @@ function nivBuffs:ADDON_LOADED(event, addon)
 end
 
 function nivBuffs:BFSkinCallBack(skinID, gloss, backdrop, group, button, colors)
-    nivBuffs_BF.skinID = skinID
-    nivBuffs_BF.gloss = gloss
-    nivBuffs_BF.backdrop = backdrop
-    nivBuffs_BF.colors = colors
-    ChatFrame1:AddMessage("Callback: " .. (nivBuffs_BF.skinID or "?"))
+    if not group then
+        -- Addon level
+        nivBuffs_BF.skinID = skinID
+        nivBuffs_BF.gloss = gloss
+        nivBuffs_BF.backdrop = backdrop
+        nivBuffs_BF.colors = colors
+        ChatFrame1:AddMessage("Callback - Addon Level: " .. (nivBuffs_BF.skinID or "?"))
+    else
+        -- Subgroup level
+        nivBuffs_BF.auras.skinID = skinID
+        nivBuffs_BF.auras.gloss = gloss
+        nivBuffs_BF.auras.backdrop = backdrop
+        nivBuffs_BF.auras.colors = colors
+        ChatFrame1:AddMessage("Callback - Group 'Auras': " .. (nivBuffs_BF.auras.skinID or "?"))
+    end
 end
