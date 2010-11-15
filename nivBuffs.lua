@@ -316,13 +316,9 @@ function nivBuffs:ADDON_LOADED(event, addon)
 
     if BF then
         LBF:RegisterSkinCallback("nivBuffs", self.BFSkinCallBack, self)
-
-        ChatFrame1:AddMessage(nivBuffs_BF.skinID or "?")
         LBF:Group("nivBuffs"):Skin(nivBuffs_BF.skinID, nivBuffs_BF.gloss, nivBuffs_BF.backdrop, nivBuffs_BF.colors)
-
         bfButtons = LBF:Group("nivBuffs", "auras")
         bfButtons:Skin(nivBuffs_BF.auras.skinID, nivBuffs_BF.auras.gloss, nivBuffs_BF.auras.backdrop, nivBuffs_BF.auras.colors)
-        ChatFrame1:AddMessage(nivBuffs_BF.skinID or "?")
     end
 
     -- init headers
