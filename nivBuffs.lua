@@ -5,6 +5,7 @@ nivBuffs:RegisterEvent("ADDON_LOADED")
 local LBF = LibStub('LibButtonFacade', true)
 local bfButtons = {}
 local BF = LBF and nivBuffDB.useButtonFacade
+local rAB = false
 
 local grey = nivBuffDB.borderBrightness
 
@@ -22,7 +23,7 @@ function debuffHeader:ActiveButtons() return btn_iterator, self, 0 end
 
 local function createAuraButton(btn, filter)
     -- subframe for icon and border
-    btn.icon = CreateFrame("Frame", nil, btn)
+    btn.icon = CreateFrame("Button", nil, btn)
     btn.icon:SetAllPoints(btn)
     btn.icon:SetFrameLevel(1)
 
@@ -40,7 +41,7 @@ local function createAuraButton(btn, filter)
     btn.icon.tex:SetPoint("TOPLEFT", s, -s)
     btn.icon.tex:SetPoint("BOTTOMRIGHT", -s, s)
     btn.icon.tex:SetTexCoord(b, 1-b, b, 1-b)
-    if not BF then btn.icon:SetBackdrop(backdrop) end
+    if not BF and not rAB then btn.icon:SetBackdrop(backdrop) end
 
     -- duration spiral
     if nivBuffDB.showDurationSpiral then
@@ -91,7 +92,8 @@ local function createAuraButton(btn, filter)
     btn.stacks:SetTextColor(nivBuffDB.fontColor.r, nivBuffDB.fontColor.g, nivBuffDB.fontColor.b, 1)
     btn.stacks:SetFont(nivBuffDB.stackFont, nivBuffDB.stackFontSize, nivBuffDB.stackFontStyle)
 
-    if BF then bfButtons:AddButton(btn, { Icon = btn.icon.tex, Cooldown = btn.cd } ) end
+    -- buttonfacade
+    if BF then bfButtons:AddButton(btn.icon, { Icon = btn.icon.tex, Cooldown = btn.cd } ) end
 
     btn.lastUpdate = 0
     btn.filter = filter
@@ -312,14 +314,16 @@ function nivBuffs:ADDON_LOADED(event, addon)
 
     -- buttonfacade
     if not nivBuffs_BF then nivBuffs_BF = {} end
-    if not nivBuffs_BF.auras then nivBuffs_BF.auras = {} end
 
     if BF then
         LBF:RegisterSkinCallback("nivBuffs", self.BFSkinCallBack, self)
-        LBF:Group("nivBuffs"):Skin(nivBuffs_BF.skinID, nivBuffs_BF.gloss, nivBuffs_BF.backdrop, nivBuffs_BF.colors)
-        bfButtons = LBF:Group("nivBuffs", "auras")
-        bfButtons:Skin(nivBuffs_BF.auras.skinID, nivBuffs_BF.auras.gloss, nivBuffs_BF.auras.backdrop, nivBuffs_BF.auras.colors)
+
+        bfButtons = LBF:Group("nivBuffs")
+        bfButtons:Skin(nivBuffs_BF.skinID, nivBuffs_BF.gloss, nivBuffs_BF.backdrop, nivBuffs_BF.colors)
     end
+    
+    -- rActionButtonStyler
+    rAB = IsAddOnLoaded('rActionButtonStyler') and nivBuffDB.useRActionButtonStyler
 
     -- init headers
     setHeaderAttributes(buffHeader, "nivBuffButtonTemplate", true)
@@ -333,18 +337,9 @@ end
 
 function nivBuffs:BFSkinCallBack(skinID, gloss, backdrop, group, button, colors)
     if not group then
-        -- Addon level
         nivBuffs_BF.skinID = skinID
         nivBuffs_BF.gloss = gloss
         nivBuffs_BF.backdrop = backdrop
         nivBuffs_BF.colors = colors
-        ChatFrame1:AddMessage("Callback - Addon Level: " .. (nivBuffs_BF.skinID or "?"))
-    else
-        -- Subgroup level
-        nivBuffs_BF.auras.skinID = skinID
-        nivBuffs_BF.auras.gloss = gloss
-        nivBuffs_BF.auras.backdrop = backdrop
-        nivBuffs_BF.auras.colors = colors
-        ChatFrame1:AddMessage("Callback - Group 'Auras': " .. (nivBuffs_BF.auras.skinID or "?"))
     end
 end

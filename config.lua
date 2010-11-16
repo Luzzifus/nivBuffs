@@ -51,7 +51,7 @@ nivBuffDB =
     blinkTime = 6,                  -- a buff/debuff icon will blink when it expires in less than x seconds, set to 0 to disable
 	blinkSpeed = 0.75,				-- blinking speed as number of blink cycles per second
     durationPos = "BOTTOM",         -- position of remaining time text, possible values are "TOP", "BOTTOM", "LEFT" or "RIGHT"
-    useButtonFacade = true,         -- toggle ButtonFacade Support
+    useButtonFacade = false,        -- toggle ButtonFacade support
 
 	-- font settings
     -- style can be "MONOCHROME", "OUTLINE", "THICKOUTLINE" or nil
