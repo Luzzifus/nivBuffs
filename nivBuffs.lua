@@ -1,6 +1,9 @@
 nivBuffs = CreateFrame("FRAME", "nivBuffs", UIParent)
 nivBuffs:SetScript('OnEvent', function(self, event, ...) self[event](self, event, ...) end)
 nivBuffs:RegisterEvent("ADDON_LOADED")
+nivBuffs:RegisterEvent("UNIT_INVENTORY_CHANGED")
+nivBuffs:RegisterEvent("PLAYER_REGEN_ENABLED")
+nivBuffs:RegisterEvent("PLAYER_REGEN_DISABLED")
 
 local LBF = LibStub('LibButtonFacade', true)
 local bfButtons = {}
@@ -256,6 +259,7 @@ do
 
         if hasEnchant then
             btn.slotID = GetInventorySlotInfo(slot)
+            btn:SetAttribute("target-slot", btn.slotID)
             icon = GetInventoryItemTexture("player", btn.slotID)
             btn.icon.tex:SetTexture(icon)
 
@@ -313,27 +317,29 @@ do
 end
 
 local function setHeaderAttributes(header, template, isBuff)
-    header:SetAttribute("unit", "player")
-    header:SetAttribute("filter", isBuff and "HELPFUL" or "HARMFUL")
-    header:SetAttribute("template", template)
-    header:SetAttribute("separateOwn", 0)
-    header:SetAttribute("minWidth", 100)
-    header:SetAttribute("minHeight", 100)
+    local s = function(...) header:SetAttribute(...) end
 
-    header:SetAttribute("point", isBuff and nivBuffDB.buffAnchor[1] or nivBuffDB.debuffAnchor[1])
-    header:SetAttribute("xOffset", isBuff and nivBuffDB.buffXoffset or nivBuffDB.debuffXoffset)
-    header:SetAttribute("yOffset", isBuff and nivBuffDB.buffYoffset or nivBuffDB.debuffYoffset)
-    header:SetAttribute("wrapAfter", isBuff and nivBuffDB.buffIconsPerRow or nivBuffDB.debuffIconsPerRow)
-    header:SetAttribute("wrapXOffset", isBuff and nivBuffDB.buffWrapXoffset or nivBuffDB.debuffWrapXoffset)
-    header:SetAttribute("wrapYOffset", isBuff and nivBuffDB.buffWrapYoffset or nivBuffDB.debuffWrapYoffset)
-    header:SetAttribute("maxWraps", isBuff and nivBuffDB.buffMaxWraps or nivBuffDB.debuffMaxWraps)
+    s("unit", "player")
+    s("filter", isBuff and "HELPFUL" or "HARMFUL")
+    s("template", template)
+    s("separateOwn", 0)
+    s("minWidth", 100)
+    s("minHeight", 100)
 
-    header:SetAttribute("sortMethod", nivBuffDB.sortMethod)
-    header:SetAttribute("sortDirection", nivBuffDB.sortReverse and "-" or "+")
+    s("point", isBuff and nivBuffDB.buffAnchor[1] or nivBuffDB.debuffAnchor[1])
+    s("xOffset", isBuff and nivBuffDB.buffXoffset or nivBuffDB.debuffXoffset)
+    s("yOffset", isBuff and nivBuffDB.buffYoffset or nivBuffDB.debuffYoffset)
+    s("wrapAfter", isBuff and nivBuffDB.buffIconsPerRow or nivBuffDB.debuffIconsPerRow)
+    s("wrapXOffset", isBuff and nivBuffDB.buffWrapXoffset or nivBuffDB.debuffWrapXoffset)
+    s("wrapYOffset", isBuff and nivBuffDB.buffWrapYoffset or nivBuffDB.debuffWrapYoffset)
+    s("maxWraps", isBuff and nivBuffDB.buffMaxWraps or nivBuffDB.debuffMaxWraps)
+
+    s("sortMethod", nivBuffDB.sortMethod)
+    s("sortDirection", nivBuffDB.sortReverse and "-" or "+")
 
     if isBuff and nivBuffDB.showWeaponEnch then
-        header:SetAttribute("includeWeapons", 1)
-        header:SetAttribute("weaponTemplate", "nivBuffButtonTemplate")
+        s("includeWeapons", 1)
+        s("weaponTemplate", "nivBuffButtonTemplate")
     end
 
     header:SetScale(isBuff and nivBuffDB.buffScale or nivBuffDB.debuffScale)
@@ -351,13 +357,10 @@ function nivBuffs:ADDON_LOADED(event, addon)
 
     -- hide blizz auras
     BuffFrame:UnregisterEvent("UNIT_AURA")
-    BuffFrame.Show = BuffFrame.Hide
-    TemporaryEnchantFrame.Show = TemporaryEnchantFrame.Hide
-    ConsolidatedBuffs.Show = ConsolidatedBuffs.Hide
-
-    BuffFrame:Hide()
-    TemporaryEnchantFrame:Hide()
-    ConsolidatedBuffs:Hide()
+    local h = function(f) f.Show = f.Hide; f:Hide() end
+    h(BuffFrame)
+    h(TemporaryEnchantFrame)
+    h(ConsolidatedBuffs)
 
     -- buttonfacade
     if not nivBuffs_BF then nivBuffs_BF = {} end
@@ -377,6 +380,21 @@ function nivBuffs:ADDON_LOADED(event, addon)
     setHeaderAttributes(debuffHeader, "nivDebuffButtonTemplate", false)
     debuffHeader:SetPoint(unpack(nivBuffDB.debuffAnchor))
     debuffHeader:Show()
+    
+    -- init weapon enchant tracking
+    nivBuffs:UNIT_INVENTORY_CHANGED()
+end
+
+local infight = false
+function nivBuffs:PLAYER_REGEN_ENABLED() infight = false end
+function nivBuffs:PLAYER_REGEN_DISABLED() infight = true end
+
+function nivBuffs:UNIT_INVENTORY_CHANGED()
+    if not infight then
+        SecureAuraHeader_OnUpdate(buffHeader) 
+        SecureAuraHeader_Update(buffHeader)
+    end
+    updateStyle(buffHeader, "PLAYER_ENTERING_WORLD")
 end
 
 function nivBuffs:BFSkinCallBack(skinID, gloss, backdrop, group, button, colors)

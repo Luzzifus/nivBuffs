@@ -43,15 +43,15 @@ nivBuffDB =
     sortMethod = "TIME",            -- how to sort the buffs/debuffs, possible values are "NAME", "INDEX" or "TIME"
     sortReverse = true,             -- reverse sort order
     showWeaponEnch = true,          -- show or hide temporary weapon enchants
-    showDurationSpiral = true,      -- show or hide the duration spiral
-    showDurationBar = false,        -- show or hide the duration bar
+    showDurationSpiral = false,     -- show or hide the duration spiral
+    showDurationBar = true,         -- show or hide the duration bar
     showDurationTimers = true,      -- show or hide the duration text timers
     coloredBorder = true,           -- highlight debuffs and weapon enchants with a different border color
     borderBrightness = 0.25,        -- brightness of the default non-colored icon border ( 0 -> black, 1 -> white )
     blinkTime = 6,                  -- a buff/debuff icon will blink when it expires in less than x seconds, set to 0 to disable
     blinkSpeed = 0.75,              -- blinking speed as number of blink cycles per second
     durationPos = "BOTTOM",         -- position of remaining time text, possible values are "TOP", "BOTTOM", "LEFT" or "RIGHT"
-    useButtonFacade = true,         -- toggle ButtonFacade support
+    useButtonFacade = false,        -- toggle ButtonFacade support
 
     -- font settings
     -- style can be "MONOCHROME", "OUTLINE", "THICKOUTLINE" or nil
