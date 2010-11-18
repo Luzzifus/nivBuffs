@@ -1,9 +1,7 @@
 nivBuffs = CreateFrame("FRAME", "nivBuffs", UIParent)
 nivBuffs:SetScript('OnEvent', function(self, event, ...) self[event](self, event, ...) end)
 nivBuffs:RegisterEvent("ADDON_LOADED")
-nivBuffs:RegisterEvent("UNIT_INVENTORY_CHANGED")
-nivBuffs:RegisterEvent("PLAYER_REGEN_ENABLED")
-nivBuffs:RegisterEvent("PLAYER_REGEN_DISABLED")
+--nivBuffs:RegisterEvent("UNIT_INVENTORY_CHANGED")
 
 local LBF = LibStub('LibButtonFacade', true)
 local bfButtons = {}
@@ -31,6 +29,7 @@ end
 local createAuraButton
 do
     local s, b = 3, 3 / 28
+    local n = nivBuffDB
 
     -- border texture
     local backdrop = {
@@ -41,9 +40,10 @@ do
 
     createAuraButton = function(btn, filter)
         -- subframe for icon and border
-        btn.icon = CreateFrame("Frame", nil, btn)
+        btn.icon = CreateFrame("Button", nil, btn)
         btn.icon:SetAllPoints(btn)
         btn.icon:SetFrameLevel(1)
+        btn.icon:EnableMouse(false)
 
         -- icon texture
         btn.icon.tex = btn.icon:CreateTexture(nil, "ARTWORK")
@@ -53,7 +53,7 @@ do
         if not BF then btn.icon:SetBackdrop(backdrop) end
 
         -- duration spiral
-        if nivBuffDB.showDurationSpiral then
+        if n.showDurationSpiral then
             btn.cd = CreateFrame("Cooldown", nil, btn.icon)
             btn.cd:SetAllPoints(btn.icon.tex)
             btn.cd:SetReverse(true)
@@ -61,7 +61,7 @@ do
             btn.cd:SetFrameLevel(3)
         end
 
-        if nivBuffDB.showDurationBar then
+        if n.showDurationBar then
             btn.bar = CreateFrame("STATUSBAR", nil, btn.icon)
             btn.bar:SetPoint("TOPLEFT", btn.icon, "TOPLEFT", 3, -3)
             btn.bar:SetPoint("BOTTOMLEFT", btn.icon, "BOTTOMLEFT", 3, 3)
@@ -86,23 +86,23 @@ do
         -- duration text
         btn.text = btn.vFrame:CreateFontString(nil, "OVERLAY")
         btn.text:SetFontObject(GameFontNormalSmall)
-        btn.text:SetTextColor(nivBuffDB.fontColor.r, nivBuffDB.fontColor.g, nivBuffDB.fontColor.b, 1)
-        btn.text:SetFont(nivBuffDB.durationFont, nivBuffDB.durationFontSize, nivBuffDB.durationFontStyle)
+        btn.text:SetTextColor(n.durationFontColor.r, n.durationFontColor.g, n.durationFontColor.b, 1)
+        btn.text:SetFont(n.durationFont, n.durationFontSize, n.durationFontStyle)
 
-        if nivBuffDB.durationPos == "TOP" then btn.text:SetPoint("BOTTOM", btn.icon, "TOP", 0, 2)
-        elseif nivBuffDB.durationPos == "LEFT" then btn.text:SetPoint("RIGHT", btn.icon, "LEFT", -2, 0)
-        elseif nivBuffDB.durationPos == "RIGHT" then btn.text:SetPoint("LEFT", btn.icon, "RIGHT", 2, 0)
+        if n.durationPos == "TOP" then btn.text:SetPoint("BOTTOM", btn.icon, "TOP", 0, 2)
+        elseif n.durationPos == "LEFT" then btn.text:SetPoint("RIGHT", btn.icon, "LEFT", -2, 0)
+        elseif n.durationPos == "RIGHT" then btn.text:SetPoint("LEFT", btn.icon, "RIGHT", 2, 0)
         else btn.text:SetPoint("TOP", btn.icon, "BOTTOM", 0, -2) end
 
         -- stack count
         btn.stacks = btn.vFrame:CreateFontString(nil, "OVERLAY")
-        btn.stacks:SetPoint("BOTTOMRIGHT", btn.icon, "BOTTOMRIGHT", 4, -2)
+        btn.stacks:SetPoint("BOTTOMRIGHT", btn.icon, "BOTTOMRIGHT", 4 + n.stacksXoffset, -2 + n.stacksYoffset)
         btn.stacks:SetFontObject(GameFontNormalSmall)
-        btn.stacks:SetTextColor(nivBuffDB.fontColor.r, nivBuffDB.fontColor.g, nivBuffDB.fontColor.b, 1)
-        btn.stacks:SetFont(nivBuffDB.stackFont, nivBuffDB.stackFontSize, nivBuffDB.stackFontStyle)
+        btn.stacks:SetTextColor(n.stackFontColor.r, n.stackFontColor.g, n.stackFontColor.b, 1)
+        btn.stacks:SetFont(n.stackFont, n.stackFontSize, n.stackFontStyle)
 
         -- buttonfacade
-        if BF then bfButtons:AddButton(btn, { Icon = btn.icon.tex, Cooldown = btn.cd } ) end
+        if BF then bfButtons:AddButton(btn.icon, { Icon = btn.icon.tex, Cooldown = btn.cd } ) end
 
         btn.lastUpdate = 0
         btn.filter = filter
@@ -318,6 +318,7 @@ end
 
 local function setHeaderAttributes(header, template, isBuff)
     local s = function(...) header:SetAttribute(...) end
+    local n = nivBuffDB
 
     s("unit", "player")
     s("filter", isBuff and "HELPFUL" or "HARMFUL")
@@ -326,23 +327,23 @@ local function setHeaderAttributes(header, template, isBuff)
     s("minWidth", 100)
     s("minHeight", 100)
 
-    s("point", isBuff and nivBuffDB.buffAnchor[1] or nivBuffDB.debuffAnchor[1])
-    s("xOffset", isBuff and nivBuffDB.buffXoffset or nivBuffDB.debuffXoffset)
-    s("yOffset", isBuff and nivBuffDB.buffYoffset or nivBuffDB.debuffYoffset)
-    s("wrapAfter", isBuff and nivBuffDB.buffIconsPerRow or nivBuffDB.debuffIconsPerRow)
-    s("wrapXOffset", isBuff and nivBuffDB.buffWrapXoffset or nivBuffDB.debuffWrapXoffset)
-    s("wrapYOffset", isBuff and nivBuffDB.buffWrapYoffset or nivBuffDB.debuffWrapYoffset)
-    s("maxWraps", isBuff and nivBuffDB.buffMaxWraps or nivBuffDB.debuffMaxWraps)
+    s("point", isBuff and n.buffAnchor[1] or n.debuffAnchor[1])
+    s("xOffset", isBuff and n.buffXoffset or n.debuffXoffset)
+    s("yOffset", isBuff and n.buffYoffset or n.debuffYoffset)
+    s("wrapAfter", isBuff and n.buffIconsPerRow or n.debuffIconsPerRow)
+    s("wrapXOffset", isBuff and n.buffWrapXoffset or n.debuffWrapXoffset)
+    s("wrapYOffset", isBuff and n.buffWrapYoffset or n.debuffWrapYoffset)
+    s("maxWraps", isBuff and n.buffMaxWraps or n.debuffMaxWraps)
 
-    s("sortMethod", nivBuffDB.sortMethod)
-    s("sortDirection", nivBuffDB.sortReverse and "-" or "+")
+    s("sortMethod", n.sortMethod)
+    s("sortDirection", n.sortReverse and "-" or "+")
 
-    if isBuff and nivBuffDB.showWeaponEnch then
+    if isBuff and n.showWeaponEnch then
         s("includeWeapons", 1)
         s("weaponTemplate", "nivBuffButtonTemplate")
     end
 
-    header:SetScale(isBuff and nivBuffDB.buffScale or nivBuffDB.debuffScale)
+    header:SetScale(isBuff and n.buffScale or n.debuffScale)
     header.filter = isBuff and "HELPFUL" or "HARMFUL"
 
     header:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -382,20 +383,17 @@ function nivBuffs:ADDON_LOADED(event, addon)
     debuffHeader:Show()
     
     -- init weapon enchant tracking
-    nivBuffs:UNIT_INVENTORY_CHANGED()
+    --nivBuffs:UNIT_INVENTORY_CHANGED()
 end
 
-local infight = false
-function nivBuffs:PLAYER_REGEN_ENABLED() infight = false end
-function nivBuffs:PLAYER_REGEN_DISABLED() infight = true end
-
+--[[
 function nivBuffs:UNIT_INVENTORY_CHANGED()
-    if not infight then
-        SecureAuraHeader_OnUpdate(buffHeader) 
-        SecureAuraHeader_Update(buffHeader)
-    end
+    if InCombatLockdown() then return end
+    SecureAuraHeader_OnUpdate(buffHeader) 
+    SecureAuraHeader_Update(buffHeader)
     updateStyle(buffHeader, "PLAYER_ENTERING_WORLD")
 end
+]]
 
 function nivBuffs:BFSkinCallBack(skinID, gloss, backdrop, group, button, colors)
     if not group then

@@ -53,17 +53,22 @@ nivBuffDB =
     durationPos = "BOTTOM",         -- position of remaining time text, possible values are "TOP", "BOTTOM", "LEFT" or "RIGHT"
     useButtonFacade = false,        -- toggle ButtonFacade support
 
+    -- position of stack counter
+    stacksXoffset = 0,
+    stacksYoffset = 0,
+
     -- font settings
     -- style can be "MONOCHROME", "OUTLINE", "THICKOUTLINE" or nil
-    fontColor = { r = 1.0, g = 1.0, b = 0.4 },
 
     -- duration text
     durationFont = "Fonts\\FRIZQT__.TTF",
+    durationFontColor = { r = 1.0, g = 1.0, b = 0.4 },
     durationFontStyle = nil,
     durationFontSize = 10,
 
     -- stack count text
     stackFont = "Fonts\\FRIZQT__.TTF",
+    stackFontColor = { r = 1.0, g = 1.0, b = 0.4 },
     stackFontStyle = nil,
     stackFontSize = 10,
 }
