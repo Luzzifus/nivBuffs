@@ -1,7 +1,6 @@
 nivBuffs = CreateFrame("FRAME", "nivBuffs", UIParent)
 nivBuffs:SetScript('OnEvent', function(self, event, ...) self[event](self, event, ...) end)
 nivBuffs:RegisterEvent("ADDON_LOADED")
---nivBuffs:RegisterEvent("UNIT_INVENTORY_CHANGED")
 
 local LBF = LibStub('LibButtonFacade', true)
 local bfButtons = {}
@@ -31,6 +30,9 @@ do
     local s, b = 3, 3 / 28
     local n = nivBuffDB
 
+    local dX, dY = n.durationXoffset, n.durationYoffset
+    local ic, tx, cd, br, bg, vf, dr, st
+
     -- border texture
     local backdrop = {
         edgeFile = "Interface\\Addons\\nivBuffs\\borderTex", 
@@ -40,66 +42,74 @@ do
 
     createAuraButton = function(btn, filter)
         -- subframe for icon and border
-        btn.icon = CreateFrame("Button", nil, btn)
-        btn.icon:SetAllPoints(btn)
-        btn.icon:SetFrameLevel(1)
-        btn.icon:EnableMouse(false)
+        ic = CreateFrame("Button", nil, btn)
+        ic:SetAllPoints(btn)
+        ic:SetFrameLevel(1)
+        ic:EnableMouse(false)
+        btn.icon = ic
 
         -- icon texture
-        btn.icon.tex = btn.icon:CreateTexture(nil, "ARTWORK")
-        btn.icon.tex:SetPoint("TOPLEFT", s, -s)
-        btn.icon.tex:SetPoint("BOTTOMRIGHT", -s, s)
-        btn.icon.tex:SetTexCoord(b, 1-b, b, 1-b)
-        if not BF then btn.icon:SetBackdrop(backdrop) end
+        tx = ic:CreateTexture(nil, "ARTWORK")
+        tx:SetPoint("TOPLEFT", s, -s)
+        tx:SetPoint("BOTTOMRIGHT", -s, s)
+        tx:SetTexCoord(b, 1-b, b, 1-b)
+        btn.icon.tex = tx
+        if not BF then ic:SetBackdrop(backdrop) end
 
         -- duration spiral
         if n.showDurationSpiral then
-            btn.cd = CreateFrame("Cooldown", nil, btn.icon)
-            btn.cd:SetAllPoints(btn.icon.tex)
-            btn.cd:SetReverse(true)
-            btn.cd.noCooldownCount = true -- no OmniCC timers
-            btn.cd:SetFrameLevel(3)
+            cd = CreateFrame("Cooldown", nil, ic)
+            cd:SetAllPoints(tx)
+            cd:SetReverse(true)
+            cd.noCooldownCount = true -- no OmniCC timers
+            cd:SetFrameLevel(3)
+            btn.cd = cd
         end
 
         if n.showDurationBar then
-            btn.bar = CreateFrame("STATUSBAR", nil, btn.icon)
-            btn.bar:SetPoint("TOPLEFT", btn.icon, "TOPLEFT", 3, -3)
-            btn.bar:SetPoint("BOTTOMLEFT", btn.icon, "BOTTOMLEFT", 3, 3)
-            btn.bar:SetWidth(2)
-            btn.bar:SetStatusBarTexture("Interface\\Addons\\nivBuffs\\bar")
-            btn.bar:SetOrientation("VERTICAL")
+            br = CreateFrame("STATUSBAR", nil, ic)
+            br:SetPoint("TOPLEFT", ic, "TOPLEFT", 3, -3)
+            br:SetPoint("BOTTOMLEFT", ic, "BOTTOMLEFT", 3, 3)
+            br:SetWidth(2)
+            br:SetStatusBarTexture("Interface\\Addons\\nivBuffs\\bar")
+            br:SetOrientation("VERTICAL")
+            btn.bar = br
 
-            btn.bar.bg = btn.bar:CreateTexture(nil, "BACKGROUND")
-            btn.bar.bg:SetPoint("TOPLEFT", btn.icon, "TOPLEFT", 3, -3)
-            btn.bar.bg:SetPoint("BOTTOMLEFT", btn.icon, "BOTTOMLEFT", 3, 3)        
-            btn.bar.bg:SetWidth(3)
-            btn.bar.bg:SetTexture("Interface\\Addons\\nivBuffs\\bar")
-            btn.bar.bg:SetTexCoord(0, 1, 0, 1)
-            btn.bar.bg:SetVertexColor(0, 0, 0, 0.6)
+            bg = br:CreateTexture(nil, "BACKGROUND")
+            bg:SetPoint("TOPLEFT", ic, "TOPLEFT", 3, -3)
+            bg:SetPoint("BOTTOMLEFT", ic, "BOTTOMLEFT", 3, 3)        
+            bg:SetWidth(3)
+            bg:SetTexture("Interface\\Addons\\nivBuffs\\bar")
+            bg:SetTexCoord(0, 1, 0, 1)
+            bg:SetVertexColor(0, 0, 0, 0.6)
+            btn.bar.bg = bg
         end
 
         -- subframe for value texts
-        btn.vFrame = CreateFrame("Frame", nil, btn)
-        btn.vFrame:SetAllPoints(btn)
-        btn.vFrame:SetFrameLevel(5)
+        vf = CreateFrame("Frame", nil, btn)
+        vf:SetAllPoints(btn)
+        vf:SetFrameLevel(20)
+        btn.vFrame = vf
 
         -- duration text
-        btn.text = btn.vFrame:CreateFontString(nil, "OVERLAY")
-        btn.text:SetFontObject(GameFontNormalSmall)
-        btn.text:SetTextColor(n.durationFontColor.r, n.durationFontColor.g, n.durationFontColor.b, 1)
-        btn.text:SetFont(n.durationFont, n.durationFontSize, n.durationFontStyle)
+        dr = vf:CreateFontString(nil, "OVERLAY")
+        dr:SetFontObject(GameFontNormalSmall)
+        dr:SetTextColor(unpack(n.durationFontColor))
+        dr:SetFont(n.durationFont, n.durationFontSize, n.durationFontStyle)
+        btn.text = dr
 
-        if n.durationPos == "TOP" then btn.text:SetPoint("BOTTOM", btn.icon, "TOP", 0, 2)
-        elseif n.durationPos == "LEFT" then btn.text:SetPoint("RIGHT", btn.icon, "LEFT", -2, 0)
-        elseif n.durationPos == "RIGHT" then btn.text:SetPoint("LEFT", btn.icon, "RIGHT", 2, 0)
-        else btn.text:SetPoint("TOP", btn.icon, "BOTTOM", 0, -2) end
+        if n.durationPos == "TOP" then dr:SetPoint("BOTTOM", ic, "TOP", dX, 2 + dY)
+        elseif n.durationPos == "LEFT" then dr:SetPoint("RIGHT", ic, "LEFT", dX - 2, dY)
+        elseif n.durationPos == "RIGHT" then dr:SetPoint("LEFT", ic, "RIGHT", 2 + dX, dY)
+        else dr:SetPoint("TOP", ic, "BOTTOM", dX,  dY - 2) end
 
         -- stack count
-        btn.stacks = btn.vFrame:CreateFontString(nil, "OVERLAY")
-        btn.stacks:SetPoint("BOTTOMRIGHT", btn.icon, "BOTTOMRIGHT", 4 + n.stacksXoffset, -2 + n.stacksYoffset)
-        btn.stacks:SetFontObject(GameFontNormalSmall)
-        btn.stacks:SetTextColor(n.stackFontColor.r, n.stackFontColor.g, n.stackFontColor.b, 1)
-        btn.stacks:SetFont(n.stackFont, n.stackFontSize, n.stackFontStyle)
+        st = vf:CreateFontString(nil, "OVERLAY")
+        st:SetPoint("BOTTOMRIGHT", ic, "BOTTOMRIGHT", 4 + n.stacksXoffset, n.stacksYoffset - 2)
+        st:SetFontObject(GameFontNormalSmall)
+        st:SetTextColor(unpack(n.stackFontColor))
+        st:SetFont(n.stackFont, n.stackFontSize, n.stackFontStyle)
+        btn.stacks = st
 
         -- buttonfacade
         if BF then bfButtons:AddButton(btn.icon, { Icon = btn.icon.tex, Cooldown = btn.cd } ) end
@@ -259,7 +269,6 @@ do
 
         if hasEnchant then
             btn.slotID = GetInventorySlotInfo(slot)
-            btn:SetAttribute("target-slot", btn.slotID)
             icon = GetInventoryItemTexture("player", btn.slotID)
             btn.icon.tex:SetTexture(icon)
 
@@ -381,25 +390,16 @@ function nivBuffs:ADDON_LOADED(event, addon)
     setHeaderAttributes(debuffHeader, "nivDebuffButtonTemplate", false)
     debuffHeader:SetPoint(unpack(nivBuffDB.debuffAnchor))
     debuffHeader:Show()
-    
-    -- init weapon enchant tracking
-    --nivBuffs:UNIT_INVENTORY_CHANGED()
-end
 
---[[
-function nivBuffs:UNIT_INVENTORY_CHANGED()
-    if InCombatLockdown() then return end
-    SecureAuraHeader_OnUpdate(buffHeader) 
-    SecureAuraHeader_Update(buffHeader)
-    updateStyle(buffHeader, "PLAYER_ENTERING_WORLD")
+    -- tidy up
+    setHeaderAttributes = nil
+    collectgarbage("collect")
 end
-]]
 
 function nivBuffs:BFSkinCallBack(skinID, gloss, backdrop, group, button, colors)
-    if not group then
-        nivBuffs_BF.skinID = skinID
-        nivBuffs_BF.gloss = gloss
-        nivBuffs_BF.backdrop = backdrop
-        nivBuffs_BF.colors = colors
-    end
+    if group then return end
+    nivBuffs_BF.skinID = skinID
+    nivBuffs_BF.gloss = gloss
+    nivBuffs_BF.backdrop = backdrop
+    nivBuffs_BF.colors = colors
 end

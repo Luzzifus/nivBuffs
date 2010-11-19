@@ -50,8 +50,13 @@ nivBuffDB =
     borderBrightness = 0.25,        -- brightness of the default non-colored icon border ( 0 -> black, 1 -> white )
     blinkTime = 6,                  -- a buff/debuff icon will blink when it expires in less than x seconds, set to 0 to disable
     blinkSpeed = 0.75,              -- blinking speed as number of blink cycles per second
-    durationPos = "BOTTOM",         -- position of remaining time text, possible values are "TOP", "BOTTOM", "LEFT" or "RIGHT"
     useButtonFacade = false,        -- toggle ButtonFacade support
+
+    -- position of duration text
+    -- possible values are "TOP", "BOTTOM", "LEFT" or "RIGHT"
+    durationPos = "BOTTOM",
+    durationXoffset = 0,
+    durationYoffset = 0,
 
     -- position of stack counter
     stacksXoffset = 0,
@@ -59,16 +64,17 @@ nivBuffDB =
 
     -- font settings
     -- style can be "MONOCHROME", "OUTLINE", "THICKOUTLINE" or nil
-
+    -- color table as { r, g, b, a }
+    
     -- duration text
     durationFont = "Fonts\\FRIZQT__.TTF",
-    durationFontColor = { r = 1.0, g = 1.0, b = 0.4 },
+    durationFontColor = { 1.0, 1.0, 0.4, 1 },
     durationFontStyle = nil,
     durationFontSize = 10,
 
     -- stack count text
     stackFont = "Fonts\\FRIZQT__.TTF",
-    stackFontColor = { r = 1.0, g = 1.0, b = 0.4 },
+    stackFontColor = { 1.0, 1.0, 0.4, 1 },
     stackFontStyle = nil,
     stackFontSize = 10,
 }
