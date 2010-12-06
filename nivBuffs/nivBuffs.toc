@@ -2,7 +2,7 @@
 ## Title: nivBuffs
 ## Author: Luzzifus
 ## OptionalDeps: ButtonFacade
-## SavedVariables: nivBuffs_BF
+## SavedVariables: nivBuffDB
 
 nivAuraButtonTemplate.xml
 config.lua

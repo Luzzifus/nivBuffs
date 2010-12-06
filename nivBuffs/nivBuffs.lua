@@ -4,9 +4,83 @@ nivBuffs:RegisterEvent("ADDON_LOADED")
 
 local LBF = LibStub('LibButtonFacade', true)
 local bfButtons = {}
-local BF = LBF and nivBuffDB.useButtonFacade
+local BF, grey
 
-local grey = nivBuffDB.borderBrightness
+local defaults = {
+	Buff = {
+		Name = "Buff",
+		Anchor = { from = "TOPLEFT", frame = "UIParent", to = "TOPLEFT", x = 15, y = -15 },
+		Xoffset = 35,
+		Yoffset = 0,
+		IconsPerRow = 20,
+		MaxWraps = 10,
+		WrapXoffset = 0,
+		WrapYoffset = -55,
+		Scale = 0.8,
+		SortMethod = "TIME",
+		SortReverse = true,
+	},
+	
+	Debuff = {
+		Name = "Debuff",
+		Anchor = { from = "TOPLEFT", frame = "UIParent", to = "TOPLEFT", x = 15, y = -135 },
+		Xoffset = 35,
+		Yoffset = 0,
+		IconsPerRow = 20,
+		MaxWraps = 10,
+		WrapXoffset = 0,
+		WrapYoffset = -55,
+		Scale = 0.8,
+		SortMethod = "TIME",
+		SortReverse = true,
+	},
+    
+    showWeaponEnch = true,
+    showDurationSpiral = false,
+    showDurationBar = true,
+    showDurationTimers = true,
+    coloredBorder = true,
+    borderBrightness = 0.25,
+    blinkTime = 6,
+    blinkSpeed = 0.75,
+    
+	useButtonFacade = false,
+	bfSettings = {
+		skinID = "Blizzard",
+		gloss = 0,
+		backdrop = 0,
+		colors = {},	
+	},
+
+	Duration = {
+		Name = "Duration Text",
+		Pos = "BOTTOM",
+		Xoffset = 0,
+		Yoffset = 0,
+		Font = "Fonts\\FRIZQT__.TTF",
+		FontColor = { r = 1.0, g = 1.0, b = 0.4, a = 1 },
+		FontStyle = nil,
+		FontSize = 10,
+	},
+
+	Stacks = {
+		Name = "Stack Counter",
+		Pos = "BOTTOM",
+		Xoffset = 14,
+		Yoffset = 4,
+		Font = "Fonts\\FRIZQT__.TTF",
+		FontColor = { r = 1.0, g = 1.0, b = 0.4, a = 1 },
+		FontStyle = nil,
+		FontSize = 10,
+	},
+}
+
+function nivBuffs:LoadDefaults()
+	nivBuffDB = nivBuffDB or {}
+	for k,v in pairs(defaults) do
+		if(type(nivBuffDB[k]) == 'nil') then nivBuffDB[k] = v end
+	end
+end
 
 -- init secure aura headers
 local buffHeader = CreateFrame("Frame", "nivBuffs_Buffs", UIParent, "SecureAuraHeaderTemplate")
@@ -28,10 +102,8 @@ end
 local createAuraButton
 do
     local s, b = 3, 3 / 28
-    local n = nivBuffDB
-
-    local dX, dY = n.durationXoffset, n.durationYoffset
-    local ic, tx, cd, br, bg, vf, dr, st
+    local n, dX, dY, sdX, sdY, dfC, sfC
+    local ic, tx, cd, br, bd, bg, vf, dr, st
 
     -- border texture
     local backdrop = {
@@ -41,6 +113,11 @@ do
     }
 
     createAuraButton = function(btn, filter)
+        n = nivBuffDB
+        dX, dY = n.Duration.Xoffset, n.Duration.Yoffset
+        sdX, sdY = n.Stacks.Xoffset, n.Stacks.Yoffset
+        dfC, sfC = n.Duration.FontColor, n.Stacks.FontColor
+        
         -- subframe for icon and border
         ic = CreateFrame("Button", nil, btn)
         ic:SetAllPoints(btn)
@@ -85,6 +162,11 @@ do
             btn.bar.bg = bg
         end
 
+        -- buttonfacade border
+        bd = ic:CreateTexture(nil, "OVERLAY")
+        bd:SetAllPoints(btn)
+        btn.BFborder = bd
+
         -- subframe for value texts
         vf = CreateFrame("Frame", nil, btn)
         vf:SetAllPoints(btn)
@@ -94,25 +176,29 @@ do
         -- duration text
         dr = vf:CreateFontString(nil, "OVERLAY")
         dr:SetFontObject(GameFontNormalSmall)
-        dr:SetTextColor(unpack(n.durationFontColor))
-        dr:SetFont(n.durationFont, n.durationFontSize, n.durationFontStyle)
+        dr:SetTextColor(dfC.r, dfC.g, dfC.b, dfC.a)
+        dr:SetFont(n.Duration.Font, n.Duration.FontSize, n.Duration.FontStyle)
         btn.text = dr
 
-        if n.durationPos == "TOP" then dr:SetPoint("BOTTOM", ic, "TOP", dX, 2 + dY)
-        elseif n.durationPos == "LEFT" then dr:SetPoint("RIGHT", ic, "LEFT", dX - 2, dY)
-        elseif n.durationPos == "RIGHT" then dr:SetPoint("LEFT", ic, "RIGHT", 2 + dX, dY)
+        if n.Duration.Pos == "TOP" then dr:SetPoint("BOTTOM", ic, "TOP", dX, 2 + dY)
+        elseif n.Duration.Pos == "LEFT" then dr:SetPoint("RIGHT", ic, "LEFT", dX - 2, dY)
+        elseif n.Duration.Pos == "RIGHT" then dr:SetPoint("LEFT", ic, "RIGHT", 2 + dX, dY)
         else dr:SetPoint("TOP", ic, "BOTTOM", dX,  dY - 2) end
 
         -- stack count
         st = vf:CreateFontString(nil, "OVERLAY")
-        st:SetPoint("BOTTOMRIGHT", ic, "BOTTOMRIGHT", 4 + n.stacksXoffset, n.stacksYoffset - 2)
         st:SetFontObject(GameFontNormalSmall)
-        st:SetTextColor(unpack(n.stackFontColor))
-        st:SetFont(n.stackFont, n.stackFontSize, n.stackFontStyle)
+        st:SetTextColor(sfC.r, sfC.g, sfC.b, sfC.a)
+        st:SetFont(n.Stacks.Font, n.Stacks.FontSize, n.Stacks.FontStyle)
         btn.stacks = st
 
+		if n.Stacks.Pos == "TOP" then st:SetPoint("BOTTOM", ic, "TOP", sdX, sdY)
+        elseif n.Stacks.Pos == "LEFT" then st:SetPoint("RIGHT", ic, "LEFT", sdX, sdY)
+        elseif n.Stacks.Pos == "RIGHT" then st:SetPoint("LEFT", ic, "RIGHT", sdX, sdY)
+        else st:SetPoint("TOP", ic, "BOTTOM", sdX,  sdY) end
+
         -- buttonfacade
-        if BF then bfButtons:AddButton(btn.icon, { Icon = btn.icon.tex, Cooldown = btn.cd } ) end
+        if BF then bfButtons:AddButton(btn.icon, { Icon = btn.icon.tex, Cooldown = btn.cd, Border = btn.BFborder } ) end
 
         btn.lastUpdate = 0
         btn.filter = filter
@@ -217,7 +303,9 @@ do
             cond = (filter == "HARMFUL") and nivBuffDB.coloredBorder
             c.r, c.g, c.b = cond and 0.6 or grey, cond and 0 or grey, cond and 0 or grey
             if dType and cond then c = DebuffTypeColor[dType] end
-            btn.icon:SetBackdropBorderColor(c.r, c.g, c.b, 1)
+
+            if BF then btn.BFborder:SetVertexColor(c.r, c.g, c.b, 1)
+            else btn.icon:SetBackdropBorderColor(c.r, c.g, c.b, 1) end
 
             if duration > 0 then 
                 if btn.cd then 
@@ -275,7 +363,9 @@ do
             r, g, b = grey, grey, grey
             c = GetInventoryItemQuality("player", slotid)
             if nivBuffDB.coloredBorder then r, g, b = GetItemQualityColor(c or 1) end
-            btn.icon:SetBackdropBorderColor(r, g, b, 1)
+
+            if BF then btn.BFborder:SetVertexColor(r, g, b, 1)
+            else btn.icon:SetBackdropBorderColor(r, g, b, 1) end
 
             btn.rTime = rTime / 1000
             btn.bTime = nivBuffDB.blinkTime + 1.1
@@ -327,7 +417,7 @@ end
 
 local function setHeaderAttributes(header, template, isBuff)
     local s = function(...) header:SetAttribute(...) end
-    local n = nivBuffDB
+    local n = isBuff and nivBuffDB.Buff or nivBuffDB.Debuff
 
     s("unit", "player")
     s("filter", isBuff and "HELPFUL" or "HARMFUL")
@@ -336,23 +426,23 @@ local function setHeaderAttributes(header, template, isBuff)
     s("minWidth", 100)
     s("minHeight", 100)
 
-    s("point", isBuff and n.buffAnchor[1] or n.debuffAnchor[1])
-    s("xOffset", isBuff and n.buffXoffset or n.debuffXoffset)
-    s("yOffset", isBuff and n.buffYoffset or n.debuffYoffset)
-    s("wrapAfter", isBuff and n.buffIconsPerRow or n.debuffIconsPerRow)
-    s("wrapXOffset", isBuff and n.buffWrapXoffset or n.debuffWrapXoffset)
-    s("wrapYOffset", isBuff and n.buffWrapYoffset or n.debuffWrapYoffset)
-    s("maxWraps", isBuff and n.buffMaxWraps or n.debuffMaxWraps)
+    s("point", n.Anchor.from)
+    s("xOffset", n.Xoffset)
+    s("yOffset", n.Yoffset)
+    s("wrapAfter", n.IconsPerRow)
+    s("wrapXOffset", n.WrapXoffset)
+    s("wrapYOffset", n.WrapYoffset)
+    s("maxWraps", n.MaxWraps)
 
-    s("sortMethod", n.sortMethod)
-    s("sortDirection", n.sortReverse and "-" or "+")
+    s("sortMethod", n.SortMethod)
+    s("sortDirection", n.SortReverse and "-" or "+")
 
-    if isBuff and n.showWeaponEnch then
+    if isBuff and nivBuffDB.showWeaponEnch then
         s("includeWeapons", 1)
         s("weaponTemplate", "nivBuffButtonTemplate")
     end
 
-    header:SetScale(isBuff and n.buffScale or n.debuffScale)
+    header:SetScale(n.Scale)
     header.filter = isBuff and "HELPFUL" or "HARMFUL"
 
     header:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -362,7 +452,10 @@ end
 function nivBuffs:ADDON_LOADED(event, addon)
     if (addon ~= 'nivBuffs') then return end
     self:UnregisterEvent(event)
+	self:LoadDefaults()
 
+	BF = LBF and nivBuffDB.useButtonFacade
+	grey = nivBuffDB.borderBrightness
     nivBuffDB.blinkStep = nivBuffDB.blinkSpeed / 10
 
     -- hide blizz auras
@@ -373,22 +466,24 @@ function nivBuffs:ADDON_LOADED(event, addon)
     h(ConsolidatedBuffs)
 
     -- buttonfacade
-    if not nivBuffs_BF then nivBuffs_BF = {} end
+	local n = nivBuffDB.bfSettings
 
     if BF then
         LBF:RegisterSkinCallback("nivBuffs", self.BFSkinCallBack, self)
 
         bfButtons = LBF:Group("nivBuffs")
-        bfButtons:Skin(nivBuffs_BF.skinID, nivBuffs_BF.gloss, nivBuffs_BF.backdrop, nivBuffs_BF.colors)
+        bfButtons:Skin(n.skinID, n.gloss, n.backdrop, n.colors)
     end
 
     -- init headers
+	local bA, dA = nivBuffDB.Buff.Anchor, nivBuffDB.Debuff.Anchor
+
     setHeaderAttributes(buffHeader, "nivBuffButtonTemplate", true)
-    buffHeader:SetPoint(unpack(nivBuffDB.buffAnchor))
+    buffHeader:SetPoint(bA.from, bA.frame, bA.to, bA.x, bA.y)
     buffHeader:Show()
 
     setHeaderAttributes(debuffHeader, "nivDebuffButtonTemplate", false)
-    debuffHeader:SetPoint(unpack(nivBuffDB.debuffAnchor))
+    debuffHeader:SetPoint(dA.from, dA.frame, dA.to, dA.x, dA.y)
     debuffHeader:Show()
 
     -- tidy up
@@ -396,10 +491,24 @@ function nivBuffs:ADDON_LOADED(event, addon)
     collectgarbage("collect")
 end
 
-function nivBuffs:BFSkinCallBack(skinID, gloss, backdrop, group, button, colors)
-    if group then return end
-    nivBuffs_BF.skinID = skinID
-    nivBuffs_BF.gloss = gloss
-    nivBuffs_BF.backdrop = backdrop
-    nivBuffs_BF.colors = colors
+do
+	local n
+
+	function nivBuffs:BFSkinCallBack(skinID, gloss, backdrop, group, button, colors)
+        n = nivBuffDB.bfSettings
+		if group then return end
+		n.skinID = skinID
+		n.gloss = gloss
+		n.backdrop = backdrop
+		n.colors = colors
+	end
 end
+
+local function OpenConfig()
+	if not IsAddOnLoaded('nivBuffs_Config') then LoadAddOn('nivBuffs_Config') end
+    InterfaceOptionsFrame_OpenToCategory('nivBuffs')
+end    
+
+SLASH_NIVBUFFSC1 = '/nivBuffs'
+SLASH_NIVBUFFSC2 = '/nb'
+SlashCmdList.NIVBUFFSC = OpenConfig

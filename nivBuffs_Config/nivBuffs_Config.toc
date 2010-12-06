@@ -1,0 +1,13 @@
+## Interface: 40000
+## Title: nivBuffs Config
+## Author: Luzzifus
+## RequiredDeps: nivBuffs
+## LoadOnDemand: 1
+
+libs\LibStub\LibStub.lua
+libs\AceGUI-3.0\AceGUI-3.0.xml
+libs\AceConfig-3.0\AceConfig-3.0.xml
+
+nivBuffs_Config.lua
+LibStub.lua
+nivBuffs.lua
