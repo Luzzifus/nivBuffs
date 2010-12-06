@@ -96,7 +96,7 @@ end
 
 local optAuras = function(order, object)
 	return {	
-		type = 'group', name = object.Name .. " Settings", order = order, dialogHidden = true, dialogInline = true, 
+		type = 'group', name = nivBuffDB[object].Name .. " Settings", order = order, dialogHidden = true, dialogInline = true, 
 		args = {
 
 		},
